@@ -305,6 +305,31 @@ class Grammar
     }
 
     /**
+     * Compile a keyword map.
+     *
+     * @param Fluent $fluent
+     *
+     * @return array
+     */
+    public function compileKeyword(Fluent $fluent)
+    {
+        $map = [
+            'type'                   => 'keyword',
+            'boost'                  => $fluent->boost,
+            'doc_values'             => $fluent->doc_values,
+            'fields'                 => $fluent->fields,
+            'ignore_above'           => $fluent->ignore_above,
+            'index'                  => $fluent->index,
+            'index_options'          => $fluent->index_options,
+            'norms'                  => $fluent->norms,
+            'store'                  => $fluent->store,
+            'similarity'             => $fluent->similarity,
+            'normilizer'             => $fluent->normalizer,
+        ];
+
+        return $this->formatMap($map);
+    }
+    /**
      * Compile a numeric map.
      *
      * @param Fluent $fluent
@@ -384,7 +409,9 @@ class Grammar
      */
     protected function formatMap(array $map)
     {
-        return array_filter($map);
+        return array_filter($map, function($value){
+            return $value !== null;
+        });
     }
 
     /**

@@ -101,6 +101,19 @@ class Blueprint
     }
 
     /**
+     * Add a keyword field to the map.
+     *
+     * @param string $field
+     * @param array  $attributes
+     *
+     * @return Fluent
+     */
+    public function keyword($field, $attributes = [])
+    {
+        return $this->addField('keyword', $field, $attributes);
+    }
+
+    /**
      * Add a date field to the map.
      *
      * @param string $field
