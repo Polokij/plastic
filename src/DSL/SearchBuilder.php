@@ -763,7 +763,7 @@ class SearchBuilder
      *
      * @return PlasticResult
      */
-    public function get()
+    public function get($resultsPart = 'hits')
     {
         $result = $this->getRaw();
 
@@ -773,7 +773,7 @@ class SearchBuilder
             $this->getModelFiller()->fill($this->model, $result);
         }
 
-        return $result;
+        return $result->hits();
     }
 
     /**

@@ -176,16 +176,12 @@ trait Searchable
      */
     public function __call($method, $parameters)
     {
-        if ($method == 'search') {
-            //Start an elastic dsl search query builder
-            return Plastic::search()->model($this);
-        }
-
         if ($method == 'suggest') {
             //Start an elastic dsl suggest query builder
             return Plastic::suggest()->index($this->getDocumentIndex());
         }
+        //Start an elastic dsl search query builder
+        return Plastic::search()->model($this)->$method(...$parameters);
 
-        return parent::__call($method, $parameters);
     }
 }
