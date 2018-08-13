@@ -763,7 +763,7 @@ class SearchBuilder
      *
      * @return PlasticResult
      */
-    public function get($resultsPart = 'hits')
+    public function get()
     {
         $result = $this->getRaw();
 
@@ -773,7 +773,7 @@ class SearchBuilder
             $this->getModelFiller()->fill($this->model, $result);
         }
 
-        return $result->hits();
+        return $result;
     }
 
     /**
@@ -814,6 +814,16 @@ class SearchBuilder
     public function getBoolState()
     {
         return $this->boolState;
+    }
+
+    /**
+     * Get the underlying query builder instance.
+     *
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public function getQuery()
+    {
+        return $this->query;
     }
 
     /**
@@ -871,4 +881,37 @@ class SearchBuilder
     {
         return $current ?: (int) \Request::get('page', 1);
     }
+
+    /**
+     * Dynamically handle calls into the query instance.
+     *
+     * @param  string  $method
+     * @param  array  $parameters
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        if (method_exists($this->model, $scope = 'scope'.ucfirst($method))) {
+            return $this->callScope([$this->model, $scope], $parameters);
+        }
+    }
+
+    /**
+     * Apply the given scope on the current builder instance.
+     *
+     * @param  callable  $scope
+     * @param  array  $parameters
+     * @return mixed
+     */
+    protected function callScope(callable $scope, $parameters){
+        array_unshift($parameters, $this);
+
+        $query = $this->getQuery();
+
+        $result = $scope(...array_values($parameters)) ?? $this;
+
+        return $result;
+    }
+
+
 }
