@@ -114,6 +114,19 @@ class Blueprint
     }
 
     /**
+     * Add a text field to the map.
+     *
+     * @param string $field
+     * @param array  $attributes
+     *
+     * @return Fluent
+     */
+    public function text($field, $attributes = [])
+    {
+        return $this->addField('text', $field, $attributes);
+    }
+
+    /**
      * Add a date field to the map.
      *
      * @param string $field

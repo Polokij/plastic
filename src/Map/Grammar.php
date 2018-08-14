@@ -329,6 +329,38 @@ class Grammar
 
         return $this->formatMap($map);
     }
+
+    /**
+     * Compile a text map.
+     *
+     * @param Fluent $fluent
+     *
+     * @return array
+     */
+    public function compileText(Fluent $fluent)
+    {
+        $map = [
+            'type'                       => 'text',
+            'boost'                      => $fluent->boost,
+            'eager_global_ordinals'      => $fluent->eager_global_ordinals,
+            'doc_values'                 => $fluent->doc_values,
+            'fielddata'                  => $fluent->fielddata,
+            'fielddata_frequency_filter' => $fluent->fielddata_frequency_filter,
+            'fields'                     => $fluent->fields,
+            'index'                      => $fluent->index,
+            'index_options'              => $fluent->index_options,
+            'index_prefixes'             => $fluent->index_prefixes,
+            'norms'                      => $fluent->norms,
+            'position_increment_gap'     => $fluent->position_increment_gap,
+            'store'                      => $fluent->store,
+            'search_analyzer'            => $fluent->search_analyzer,
+            'search_quote_analyzer'      => $fluent->search_quote_analyzer,
+            'similarity'                 => $fluent->similarity,
+            'term_vector'                => $fluent->term_vector,
+        ];
+
+        return $this->formatMap($map);
+    }
     /**
      * Compile a numeric map.
      *

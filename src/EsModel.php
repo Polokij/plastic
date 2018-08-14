@@ -176,5 +176,23 @@ class EsModel extends Model
         return true;
     }
 
+    /**
+     * Handle dynamic method calls into the model.
+     *
+     * @param string $method
+     * @param array  $parameters
+     *
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        if ($method == 'suggest') {
+            //Start an elastic dsl suggest query builder
+            return Plastic::suggest()->index($this->getDocumentIndex());
+        }
+        //Start an elastic dsl search query builder
+        return Plastic::search()->model($this)->$method(...$parameters);
+
+    }
 
 }
