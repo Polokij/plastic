@@ -10,7 +10,6 @@ use ONGR\ElasticsearchDSL\Aggregation\Bucketing\HistogramAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Bucketing\Ipv4RangeAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Bucketing\MissingAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Bucketing\RangeAggregation;
-use ONGR\ElasticsearchDSL\Aggregation\Bucketing\TermsAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\AvgAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\CardinalityAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\GeoBoundsAggregation;
@@ -21,16 +20,28 @@ use ONGR\ElasticsearchDSL\Aggregation\Metric\PercentilesAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\StatsAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\SumAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\ValueCountAggregation;
+use ONGR\ElasticsearchDSL\BuilderInterface;
 use ONGR\ElasticsearchDSL\Search as Query;
 
-class AggregationBuilder
+use Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation;
+
+class AggregationBuilder implements BuilderInterface
 {
+
     /**
      * An instance of DSL query.
      *
      * @var Query
      */
     public $query;
+
+    /**
+     * Is a current aggregation top level.
+     * In case topLevel = false - returning the value of 'aggregations' field
+     *
+     * @var bool
+     */
+    public $topLevel = true;
 
     /**
      * Builder constructor.
@@ -323,12 +334,17 @@ class AggregationBuilder
      * @param string      $alias
      * @param string|null $field
      * @param string|null $script
+     *
+     * @return \Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation
      */
     public function terms($alias, $field = null, $script = null)
     {
+        /** @var TermsAggregation $aggregation */
         $aggregation = new TermsAggregation($alias, $field, $script);
 
         $this->append($aggregation);
+
+        return $aggregation;
     }
 
     /**
@@ -350,4 +366,39 @@ class AggregationBuilder
     {
         $this->query->addAggregation($aggregation);
     }
+
+    /**
+     * Implementation the method from BuilderInterface
+     *
+     * @return string
+     */
+    public function getType()
+    {
+        return 'aggregations';
+    }
+
+    /**
+     * Implementation the method from BuilderInterface
+     *
+     * @return array|mixed
+     */
+    public function toArray()
+    {
+        $array = $this->toDSL();
+        if($this->topLevel){
+            return $array['aggregations'];
+        }
+        return $array['aggregations']['aggregations'] ?? $array['aggregations'] ?? $array;
+    }
+
+    /**
+     * Method required for serialization of the aggregation
+     *
+     * @return string
+     */
+    public function getName(){
+        return $this->getType();
+    }
+
+
 }
