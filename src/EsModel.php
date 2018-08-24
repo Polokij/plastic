@@ -188,10 +188,10 @@ class EsModel extends Model
     {
         if ($method == 'suggest') {
             //Start an elastic dsl suggest query builder
-            return Plastic::suggest()->index($this->getDocumentIndex());
+            return \Plastic::suggest()->index($this->getDocumentIndex());
         }
         //Start an elastic dsl search query builder
-        return Plastic::search()->model($this)->$method(...$parameters);
+        return \Plastic::search()->model($this)->$method(...$parameters);
 
     }
 

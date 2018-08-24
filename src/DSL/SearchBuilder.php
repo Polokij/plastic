@@ -775,6 +775,11 @@ class SearchBuilder
 
         return $result;
     }
+// TODO implement method for updateByQuery feature
+//    public function update($params){
+//
+//
+//    }
 
     /**
      * Return the current elastic type.
