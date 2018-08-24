@@ -9,6 +9,8 @@
 namespace Sleimanx2\Plastic\DSL\Aggregations;
 
 use \ONGR\ElasticsearchDSL\Aggregation\Bucketing\TermsAggregation as Terms;
+use ONGR\ElasticsearchDSL\BuilderBag;
+use ONGR\ElasticsearchDSL\BuilderInterface;
 
 /**
  * Class TermsAggregation
@@ -18,6 +20,16 @@ use \ONGR\ElasticsearchDSL\Aggregation\Bucketing\TermsAggregation as Terms;
  */
 class TermsAggregation extends Terms
 {
+
+    /**
+     * @var string
+     */
+//    private $field;
+
+    /**
+     * @var BuilderBag
+     */
+//    private $aggregations;
 
     /**
      * {@inheritdoc}
@@ -38,6 +50,34 @@ class TermsAggregation extends Terms
         }
 
         return $result;
+    }
+
+    /**
+     * Adds a sub-aggregation.
+     *
+     * @param \ONGR\ElasticsearchDSL\BuilderInterface|\Sleimanx2\Plastic\DSL\Aggregations\AbstractAggregation $abstractAggregation
+     *
+     * @return $this
+     */
+//    public function addSubAggregation(BuilderInterface $abstractAggregation)
+//    {
+//        if (!$this->aggregations) {
+//            $this->aggregations = $this->createBuilderBag();
+//        }
+//
+//        $this->aggregations->add($abstractAggregation);
+//
+//        return $this;
+//    }
+
+    /**
+     * Creates BuilderBag new instance.
+     *
+     * @return BuilderBag
+     */
+    private function createBuilderBag()
+    {
+        return new BuilderBag();
     }
 
 

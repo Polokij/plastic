@@ -25,7 +25,7 @@ use ONGR\ElasticsearchDSL\Search as Query;
 
 use Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation;
 
-class AggregationBuilder implements BuilderInterface
+class AggregationBuilder extends AbstractAggregation
 {
 
     /**
@@ -400,5 +400,14 @@ class AggregationBuilder implements BuilderInterface
         return $this->getType();
     }
 
+    public function supportsNesting()
+    {
+        return true;
+    }
+
+    public function getArray()
+    {
+        return [];
+    }
 
 }
