@@ -339,8 +339,25 @@ class AggregationBuilder extends AbstractAggregation
      */
     public function terms($alias, $field = null, $script = null)
     {
-        /** @var TermsAggregation $aggregation */
-        $aggregation = new TermsAggregation($alias, $field, $script);
+
+        if($script instanceof \Closure){
+            /** @var TermsAggregation $aggregation */
+            $aggregation = new TermsAggregation($alias, $field);
+
+            $emptyQuery =  $query = new \ONGR\ElasticsearchDSL\Search();
+
+            $subAggregation = new AggregationBuilder($emptyQuery);
+
+            $subAggregation = $script($subAggregation);
+
+            $aggregation->addAggregation($subAggregation);
+
+
+        }else{
+            /** @var TermsAggregation $aggregation */
+            $aggregation = new TermsAggregation($alias, $field, $script);
+        }
+
 
         $this->append($aggregation);
 
