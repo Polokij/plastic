@@ -13,7 +13,6 @@ class AggregationTermsSubAggregationTest extends PHPUnit_Framework_TestCase
         $expectedArray = ['aggregations' => ['campaign' => ['terms' => ['field' => 'campaign_id']]]];
         $this->assertEquals($expectedArray, $builder->toDSL());
 
-
         /** Testing the building of hierarchy of aggregations   */
         /** @var \Sleimanx2\Plastic\DSL\AggregationBuilder $nestedAggregation */
         $nestedAggregation = $this->getBuilder();
