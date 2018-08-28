@@ -348,7 +348,7 @@ class AggregationBuilder extends AbstractAggregation
 
             $subAggregation = new AggregationBuilder($emptyQuery);
 
-            $subAggregation = $script($subAggregation);
+            $script($subAggregation);
 
             $aggregation->addAggregation($subAggregation);
 

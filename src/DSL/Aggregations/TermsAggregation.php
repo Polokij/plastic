@@ -21,15 +21,7 @@ use ONGR\ElasticsearchDSL\BuilderInterface;
 class TermsAggregation extends Terms
 {
 
-    /**
-     * @var string
-     */
-//    private $field;
-
-    /**
-     * @var BuilderBag
-     */
-//    private $aggregations;
+    private $sorts;
 
     /**
      * {@inheritdoc}
@@ -52,23 +44,6 @@ class TermsAggregation extends Terms
         return $result;
     }
 
-    /**
-     * Adds a sub-aggregation.
-     *
-     * @param \ONGR\ElasticsearchDSL\BuilderInterface|\Sleimanx2\Plastic\DSL\Aggregations\AbstractAggregation $abstractAggregation
-     *
-     * @return $this
-     */
-//    public function addSubAggregation(BuilderInterface $abstractAggregation)
-//    {
-//        if (!$this->aggregations) {
-//            $this->aggregations = $this->createBuilderBag();
-//        }
-//
-//        $this->aggregations->add($abstractAggregation);
-//
-//        return $this;
-//    }
 
     /**
      * Creates BuilderBag new instance.
@@ -79,6 +54,44 @@ class TermsAggregation extends Terms
     {
         return new BuilderBag();
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getArray()
+    {
+        $data = array_filter(
+            [
+                'field' => $this->getField(),
+                'script' => $this->getScript(),
+//                'order' => $this->getSorts(),
+            ]
+        );
+
+        return $data;
+    }
+
+
+    /**
+     * @param array $sort
+     */
+    public function setSorts(array $sorts){
+
+        $this->sorts = $sorts;
+
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSorts(){
+
+      return $this->sorts;
+
+    }
+
+
+
 
 
 }

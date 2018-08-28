@@ -765,6 +765,7 @@ class SearchBuilder
      */
     public function get()
     {
+        \Log::info('ES request : '. collect($this->toDSL())->toJson());
         $result = $this->getRaw();
 
         $result = new PlasticResult($result);
@@ -824,7 +825,7 @@ class SearchBuilder
     /**
      * Get the underlying query builder instance.
      *
-     * @return \Illuminate\Database\Query\Builder
+     * @return \ONGR\ElasticsearchDSL\Search
      */
     public function getQuery()
     {
