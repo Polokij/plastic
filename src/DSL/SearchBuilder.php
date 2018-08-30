@@ -776,11 +776,66 @@ class SearchBuilder
 
         return $result;
     }
-// TODO implement method for updateByQuery feature
-//    public function update($params){
-//
-//
-//    }
+
+    /**
+     * Execute the query and get the first result from hits.
+     *
+     * @return null
+     */
+    public function first(){
+
+        $searchResults = $this->size(1)
+            ->get();
+
+        if($searchResults->hits()->count()){
+            return $searchResults->hits()->first();
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Add a basic term or terms clause to the query.
+     *
+     * @param $filters
+     *
+     * @return $this
+     */
+    public function where($filters)
+    {
+        $this->must();
+
+        // iterating the filters
+        collect($filters)->each(function ($ids, $name) {
+            $ids = $ids['value'] ?? $ids;
+            is_array($ids) && count($ids) && $this->terms($name, $ids);
+            ( ! is_array($ids)) && $this->term($name, $ids);
+        });
+        return $this;
+    }
+
+    /**
+     * Create or update a record matching the attributes, and fill it with values.
+     *
+     * @param  array  $attributes
+     * @param  array  $values
+     * @return \Illuminate\Database\Eloquent\Model
+     */
+    public function updateOrCreate($attributes, $values)
+    {
+        $model = $this->where($attributes)->first();
+
+        /** Checking  is the hits exists */
+        if($model){
+            $model->fill($values);
+            $model->save();
+        }else{
+            $model = $this->getModelFiller()->fillModel($model, $values);
+            $model->save();
+        }
+        return $model;
+    }
 
     /**
      * Return the current elastic type.

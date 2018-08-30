@@ -3,6 +3,7 @@
 namespace Sleimanx2\Plastic\Fillers;
 
 use Illuminate\Database\Eloquent\Model;
+//use Sleimanx2\Plastic\EsModel as Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use ReflectionMethod;
@@ -21,7 +22,7 @@ class EloquentFiller implements FillerInterface
     public function fill(Model $model, Result $result)
     {
         $hits = $result->hits()->map(function ($hit) use ($model) {
-            return $this->fillModel($model, $hit);
+            return $this->fillModel($model, $hit)->syncOriginal();
         });
 
         $result->setHits($hits);
@@ -54,7 +55,9 @@ class EloquentFiller implements FillerInterface
             }
         }
 
+        /** @var Model $instance */
         $instance = $this->newFromBuilderRecursive($model, $attributes);
+
 
         // In addition to setting the attributes
         // from the index, we will set the score as well.

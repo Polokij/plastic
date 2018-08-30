@@ -76,7 +76,6 @@ class EsModel extends Model
         return $saved;
     }
 
-
     /**
      * Perform a model update operation.
      *
