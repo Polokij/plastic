@@ -24,6 +24,7 @@ use ONGR\ElasticsearchDSL\BuilderInterface;
 use ONGR\ElasticsearchDSL\Search as Query;
 
 use Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation;
+use Sleimanx2\Plastic\DSL\Aggregations\WeightedAvgAggregation;
 
 class AggregationBuilder extends AbstractAggregation
 {
@@ -358,6 +359,15 @@ class AggregationBuilder extends AbstractAggregation
             $aggregation = new TermsAggregation($alias, $field, $script);
         }
 
+
+        $this->append($aggregation);
+
+        return $aggregation;
+    }
+
+    public function weightedAvg($alias, $field, $weight){
+
+        $aggregation = new WeightedAvgAggregation($alias, $field, $weight);
 
         $this->append($aggregation);
 
