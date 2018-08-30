@@ -826,12 +826,12 @@ class SearchBuilder
     {
         $model = $this->where($attributes)->first();
 
-        /** Checking  is the hits exists */
+        /** Checking is the hits exists */
         if($model){
             $model->fill($values);
             $model->save();
         }else{
-            $model = $this->getModelFiller()->fillModel($model, $values);
+            $model = $this->model->newInstance($values);
             $model->save();
         }
         return $model;
