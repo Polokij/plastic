@@ -106,7 +106,11 @@ class EsModel extends Model
 
         if (count($dirty) > 0) {
 
+            /** @var array $attributes */
             $attributes = $this->getAttributes();
+
+            /** @var string $_id */
+            $_id = $attributes[$this->primaryKey];
 
             // Excluding the primary key from fields - because it is metadata
             if(isset($attributes[$this->primaryKey])){
@@ -116,7 +120,7 @@ class EsModel extends Model
             $params = [
                 'index' => $this->getDocumentIndex(),
                 'type'  => $this->getDocumentType(),
-                'id'    => $this->getOriginal($this->primaryKey),
+                'id'    => $_id,
                 'body'  => [
                     'doc' => $attributes,
                 ]
