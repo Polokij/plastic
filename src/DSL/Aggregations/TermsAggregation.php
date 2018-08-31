@@ -64,7 +64,6 @@ class TermsAggregation extends Terms
             [
                 'field' => $this->getField(),
                 'script' => $this->getScript(),
-//                'order' => $this->getSorts(),
             ]
         );
 

@@ -23,6 +23,7 @@ use ONGR\ElasticsearchDSL\Aggregation\Metric\ValueCountAggregation;
 use ONGR\ElasticsearchDSL\BuilderInterface;
 use ONGR\ElasticsearchDSL\Search as Query;
 
+use Sleimanx2\Plastic\DSL\Aggregations\NestedAggregation;
 use Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation;
 use Sleimanx2\Plastic\DSL\Aggregations\WeightedAvgAggregation;
 
@@ -363,6 +364,24 @@ class AggregationBuilder extends AbstractAggregation
         $this->append($aggregation);
 
         return $aggregation;
+    }
+
+    public function nested($alias, $field, \Closure $callback){
+        /** @var TermsAggregation $aggregation */
+        $aggregation = new NestedAggregation($alias, $field);
+
+        $emptyQuery =  $query = new \ONGR\ElasticsearchDSL\Search();
+
+        $subAggregation = new AggregationBuilder($emptyQuery);
+
+        $callback($subAggregation);
+
+        $aggregation->addAggregation($subAggregation);
+
+        $this->append($aggregation);
+
+        return $aggregation;
+
     }
 
     public function weightedAvg($alias, $field, $weight){
