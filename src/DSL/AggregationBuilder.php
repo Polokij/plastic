@@ -20,6 +20,7 @@ use ONGR\ElasticsearchDSL\Aggregation\Metric\PercentilesAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\StatsAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\SumAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\ValueCountAggregation;
+use ONGR\ElasticsearchDSL\Aggregation\Pipeline\BucketScriptAggregation;
 use ONGR\ElasticsearchDSL\BuilderInterface;
 use ONGR\ElasticsearchDSL\Search as Query;
 
@@ -366,6 +367,15 @@ class AggregationBuilder extends AbstractAggregation
         return $aggregation;
     }
 
+    /**
+     * Adding nested aggregation
+     *
+     * @param          $alias
+     * @param          $field
+     * @param \Closure $callback
+     *
+     * @return \Sleimanx2\Plastic\DSL\Aggregations\NestedAggregation|\Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation
+     */
     public function nested($alias, $field, \Closure $callback){
         /** @var TermsAggregation $aggregation */
         $aggregation = new NestedAggregation($alias, $field);
@@ -384,9 +394,27 @@ class AggregationBuilder extends AbstractAggregation
 
     }
 
+    /**
+     * Add the weighted_avg aggregation
+     *
+     * @param $alias
+     * @param $field
+     * @param $weight
+     *
+     * @return \Sleimanx2\Plastic\DSL\Aggregations\WeightedAvgAggregation
+     */
     public function weightedAvg($alias, $field, $weight){
 
         $aggregation = new WeightedAvgAggregation($alias, $field, $weight);
+
+        $this->append($aggregation);
+
+        return $aggregation;
+    }
+
+    public function bucketScript($alias, array $bucketsPath, $script){
+
+        $aggregation = new BucketScriptAggregation($alias, $bucketsPath, $script);
 
         $this->append($aggregation);
 
