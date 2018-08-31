@@ -412,6 +412,15 @@ class AggregationBuilder extends AbstractAggregation
         return $aggregation;
     }
 
+    /**
+     * Add bucket_script aggregation
+     *
+     * @param       $alias
+     * @param array $bucketsPath
+     * @param       $script
+     *
+     * @return \ONGR\ElasticsearchDSL\Aggregation\Pipeline\BucketScriptAggregation
+     */
     public function bucketScript($alias, array $bucketsPath, $script){
 
         $aggregation = new BucketScriptAggregation($alias, $bucketsPath, $script);
