@@ -8,6 +8,7 @@
 
 namespace Sleimanx2\Plastic\DSL\Aggregations;
 
+use ONGR\ElasticsearchDSL\Aggregation\Metric\SumAggregation;
 use ONGR\ElasticsearchDSL\BuilderBag;
 
 /**
@@ -19,7 +20,6 @@ use ONGR\ElasticsearchDSL\BuilderBag;
  */
 class NestedAggregation extends TermsAggregation
 {
-
     /**
      * Inner aggregations container init.
      *
@@ -54,6 +54,23 @@ class NestedAggregation extends TermsAggregation
         return $data;
     }
 
-
+    public function flattenResult($result){
+        if ( ! isset($result[$this->getName()])) {
+            return [];
+        }
+        $result = $result[$this->getName()];
+        $aggregations = collect($this->getAggregations());
+        $aggregationResults = $aggregations->mapWithKeys(function($aggregation, $key) use ($result){
+            $fieldName = $aggregation->getName();
+            if($aggregation instanceof SumAggregation){
+                return [$fieldName => $result[$fieldName]['value']];
+            }
+            if($aggregation instanceof TermsAggregation){
+                return $aggregation->flattenResult($result);
+            }
+            return [$fieldName => $aggregation->flattenResult($result)];
+        });
+        return [$this->getName() => $aggregationResults];
+    }
 
 }

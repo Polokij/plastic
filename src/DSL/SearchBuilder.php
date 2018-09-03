@@ -3,6 +3,7 @@
 namespace Sleimanx2\Plastic\DSL;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\Macroable;
 use ONGR\ElasticsearchDSL\Highlight\Highlight;
 use ONGR\ElasticsearchDSL\Query\Compound\BoolQuery;
@@ -89,6 +90,13 @@ class SearchBuilder
      * @var string
      */
     protected $boolState = BoolQuery::MUST;
+
+    /**
+     * Last query result
+     *
+     * @var  PlasticResult
+     */
+    protected $lastResult;
 
     /**
      * Builder constructor.
@@ -699,6 +707,10 @@ class SearchBuilder
         return $this;
     }
 
+    public function hasAggregation(){
+        return ! empty($this->query->getAggregations());
+    }
+
     /**
      * Add function score.
      *
@@ -761,7 +773,7 @@ class SearchBuilder
     /**
      * Execute the search query against elastic and return the raw result if the model is not set.
      *
-     * @return PlasticResult
+     * @return PlasticResult | Collection
      */
     public function get()
     {
@@ -770,11 +782,19 @@ class SearchBuilder
 
         $result = new PlasticResult($result);
 
+        $this->lastResult = $result;
+
         if ($this->model) {
-            $this->getModelFiller()->fill($this->model, $result);
+            if(! $this->hasAggregation()){
+                $this->getModelFiller()->fill($this->model, $result);
+            }else{
+                $flattenedAggsResult = $this->flattenAggregation($result->aggregations());
+                $result->setHits(collect($flattenedAggsResult->toArray()));
+                $this->getModelFiller()->fill($this->model, $result);
+            }
         }
 
-        return $result;
+        return $result->hits();
     }
 
     /**
@@ -793,7 +813,6 @@ class SearchBuilder
 
         return null;
     }
-
 
     /**
      * Add a basic term or terms clause to the query.
@@ -918,6 +937,15 @@ class SearchBuilder
     }
 
     /**
+     * Return the json for DSL
+     *
+     * @return string
+     */
+    public function toJson(){
+        return json_encode($this->toDSL());
+    }
+
+    /**
      * Append a query.
      *
      * @param $query
@@ -974,5 +1002,11 @@ class SearchBuilder
         return $result;
     }
 
+    private function flattenAggregation($aggsArray){
+        $baseAggregations = $this->query->getAggregations();
+        $firstAggregation = reset($baseAggregations);
+
+        return $firstAggregation->flattenResult($aggsArray);
+    }
 
 }

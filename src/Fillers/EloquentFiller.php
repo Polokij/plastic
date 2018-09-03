@@ -28,6 +28,15 @@ class EloquentFiller implements FillerInterface
         $result->setHits($hits);
     }
 
+    public function fillAggsData(Model $model, Result $result){
+        $collection = collect($result->aggregations())
+            ->map(function ($aggsItem) use ($model) {
+                return $this->fillModel($model, $aggsItem)->syncOriginal();
+            });
+
+        $result->setHits($collection);
+    }
+
     /**
      * New From Hit Builder.
      *
@@ -42,7 +51,7 @@ class EloquentFiller implements FillerInterface
     {
         $key_name = $model->getKeyName();
 
-        $attributes = $hit['_source'];
+        $attributes = $hit['_source']  ?? $hit;
 
         if (isset($hit['_id'])) {
             $attributes[$key_name] = is_numeric($hit['_id']) ? intval($hit['_id']) : $hit['_id'];
@@ -61,7 +70,7 @@ class EloquentFiller implements FillerInterface
 
         // In addition to setting the attributes
         // from the index, we will set the score as well.
-        $instance->documentScore = $hit['_score'];
+        isset($hit['_score']) && $instance->documentScore = $hit['_score'];
         // This is now a model created
         // from an Elasticsearch document.
         $instance->isDocument = true;

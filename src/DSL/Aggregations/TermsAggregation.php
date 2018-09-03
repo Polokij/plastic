@@ -8,7 +8,10 @@
 
 namespace Sleimanx2\Plastic\DSL\Aggregations;
 
+use ONGR\ElasticsearchDSL\Aggregation\AbstractAggregation;
 use \ONGR\ElasticsearchDSL\Aggregation\Bucketing\TermsAggregation as Terms;
+use ONGR\ElasticsearchDSL\Aggregation\Metric\SumAggregation;
+use ONGR\ElasticsearchDSL\Aggregation\Pipeline\BucketScriptAggregation;
 use ONGR\ElasticsearchDSL\BuilderBag;
 use ONGR\ElasticsearchDSL\BuilderInterface;
 
@@ -45,15 +48,6 @@ class TermsAggregation extends Terms
     }
 
 
-    /**
-     * Creates BuilderBag new instance.
-     *
-     * @return BuilderBag
-     */
-    private function createBuilderBag()
-    {
-        return new BuilderBag();
-    }
 
     /**
      * {@inheritdoc}
@@ -89,8 +83,31 @@ class TermsAggregation extends Terms
 
     }
 
+    public function flattenResult($result){
+        $termResults = $result[$this->getName()] ?? null;
 
+        if( ! $termResults || ! isset($termResults['buckets'])){
+            return [];
+        }
+        $aggregations = collect($this->getAggregations());
 
+        $buckets = collect($termResults['buckets'])
+            // iterate the buckets
+            ->map(function($bucket) use ($aggregations){
 
+                // iterating the bucket fields
+                $bucketResult = $aggregations->mapWithKeys(function(AbstractAggregation $aggr) use ($bucket){
+                    $fieldName = $aggr->getName();
+                    if($aggr instanceof SumAggregation || $aggr instanceof BucketScriptAggregation){
+                        return [$fieldName => $bucket[$fieldName]['value'] ?? "N/A"];
+                    }
+                   return $aggr->flattenResult($bucket);
+                });
+                $bucketResult[$this->getName()] = $bucket['key'];
+                return $bucketResult;
+            });
 
+        return $buckets;
+
+    }
 }

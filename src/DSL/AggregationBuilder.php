@@ -353,8 +353,10 @@ class AggregationBuilder extends AbstractAggregation
 
             $script($subAggregation);
 
-            $aggregation->addAggregation($subAggregation);
-
+            $subAggregations = $subAggregation->query->getAggregations();
+            foreach ($subAggregations as $subAgg){
+                $aggregation->addAggregation($subAgg);
+            }
 
         }else{
             /** @var TermsAggregation $aggregation */
@@ -386,7 +388,11 @@ class AggregationBuilder extends AbstractAggregation
 
         $callback($subAggregation);
 
-        $aggregation->addAggregation($subAggregation);
+        $subAggregations = $subAggregation->query->getAggregations();
+
+        foreach ($subAggregations as $subAgg){
+            $aggregation->addAggregation($subAgg);
+        }
 
         $this->append($aggregation);
 
@@ -491,6 +497,18 @@ class AggregationBuilder extends AbstractAggregation
     public function getArray()
     {
         return [];
+    }
+
+    public function flattenResult($result){
+        $aggregations = collect($this->query->getAggregations());
+        $aggregationResults = $aggregations->mapWithKeys(function($aggregation, $key) use ($result){
+            $fieldName = $aggregation->getName();
+            if($aggregation instanceof SumAggregation || $aggregation instanceof BucketScriptAggregation){
+                return [$fieldName => $result[$fieldName]['value'] ?? "N/A"];
+            }
+
+            return $aggregation->flattenResult($result);
+        });
     }
 
 }

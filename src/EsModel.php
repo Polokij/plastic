@@ -33,6 +33,8 @@ class EsModel extends Model
 
     public $syncDocument = false;
 
+    public $returnRowsOnly = true;
+
     /**
      * Overriding save method
      *
