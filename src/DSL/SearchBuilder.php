@@ -110,6 +110,44 @@ class SearchBuilder
         $this->query = $grammar ?: $connection->getDSLGrammar();
     }
 
+
+    /**
+     * Return the total of hits for general request
+     * or value of cardinality aggregation response
+     * in case aggregation used
+     *
+     * @return int
+     */
+    public function count(){
+        /** @var SearchBuilder $query */
+        $newSearchBuilder = clone($this);
+        $newSearchBuilder->size(0);
+
+        /** @var Query $query */
+        $query = $newSearchBuilder->query;
+
+        if($this->hasAggregation()){
+
+            $aggregations = $query->getAggregations();
+
+            /** @var \ONGR\ElasticsearchDSL\Aggregation\Bucketing\TermsAggregation $firstAggregation */
+            $firstAggregation = reset($aggregations);
+            $firstAggsField = $firstAggregation->getField();
+
+            $firstAggregation->setParameters(['size' => 1]);
+
+            $newSearchBuilder->aggregate(function(AggregationBuilder $aggBuilder) use ($firstAggsField){
+               $aggBuilder->cardinality('count', $firstAggsField);
+            });
+
+            $rawResult = $newSearchBuilder->getRaw();
+            return $rawResult['aggregations']['count']['value'] ?? 0;
+
+        }else {
+            $rawResult = $newSearchBuilder->size(0)->getRaw();
+            return $rawResult['hits']['total'];
+        }
+    }
     /**
      * Set the elastic type to query against.
      *
@@ -343,6 +381,23 @@ class SearchBuilder
         }
 
         return $this;
+    }
+
+    /**
+     * Flattening the aggregation result
+     * to rows view
+     *
+     * @param $aggsArray
+     *
+     * @return mixed
+     */
+    private function flattenAggregation($aggsArray){
+
+        $baseAggregations = $this->query->getAggregations();
+
+        $firstAggregation = reset($baseAggregations);
+
+        return $firstAggregation->flattenResult($aggsArray);
     }
 
     /**
@@ -761,6 +816,8 @@ class SearchBuilder
      */
     public function getRaw()
     {
+        \Log::info('ES request : '. $this->toJson());
+
         $params = [
             'index' => $this->getIndex(),
             'type'  => $this->getType(),
@@ -777,12 +834,12 @@ class SearchBuilder
      */
     public function get()
     {
-        \Log::info('ES request : '. collect($this->toDSL())->toJson());
+
         $result = $this->getRaw();
 
         $result = new PlasticResult($result);
 
-        $this->lastResult = $result;
+        $this->lastResult = clone($result);
 
         if ($this->model) {
             if(! $this->hasAggregation()){
@@ -933,6 +990,17 @@ class SearchBuilder
      */
     public function toDSL()
     {
+        if($this->hasAggregation()){
+            if($size = $this->query->getSize()){
+                $aggs = $this->query->getAggregations();
+                foreach ($aggs as $agg){
+                    $agg->setParameters(['size' => $size]);
+                }
+                $this->size(0);
+            }
+
+        }
+
         return $this->query->toArray();
     }
 
@@ -1000,13 +1068,6 @@ class SearchBuilder
         $result = $scope(...array_values($parameters)) ?? $this;
 
         return $result;
-    }
-
-    private function flattenAggregation($aggsArray){
-        $baseAggregations = $this->query->getAggregations();
-        $firstAggregation = reset($baseAggregations);
-
-        return $firstAggregation->flattenResult($aggsArray);
     }
 
 }

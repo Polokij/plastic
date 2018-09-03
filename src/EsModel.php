@@ -27,7 +27,6 @@ class EsModel extends Model
      */
     protected $primaryKey = '_id';
 
-
     /** @var string $dateFormat */
     protected $dateFormat = "Y-m-d\TH:i:sP";
 
