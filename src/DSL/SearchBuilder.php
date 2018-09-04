@@ -864,8 +864,8 @@ class SearchBuilder
         $searchResults = $this->size(1)
             ->get();
 
-        if($searchResults->hits()->count()){
-            return $searchResults->hits()->first();
+        if($searchResults->count()){
+            return $searchResults->first();
         }
 
         return null;
