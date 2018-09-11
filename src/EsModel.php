@@ -8,6 +8,7 @@
 
 namespace Sleimanx2\Plastic;
 
+use App\Models\AnalyticData;
 use function GuzzleHttp\Psr7\parse_request;
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,6 +34,11 @@ class EsModel extends Model
     public $syncDocument = false;
 
     public $returnRowsOnly = true;
+
+    protected $fillable = [];
+
+    protected $guarded = [];
+
 
     /**
      * Overriding save method
