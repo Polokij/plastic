@@ -137,7 +137,7 @@ class SearchBuilder
             $firstAggregation->setParameters(['size' => 1]);
 
             $newSearchBuilder->aggregate(function(AggregationBuilder $aggBuilder) use ($firstAggsField){
-               $aggBuilder->cardinality('count', $firstAggsField);
+                $aggBuilder->cardinality('count', $firstAggsField);
             });
 
             $rawResult = $newSearchBuilder->getRaw();
@@ -907,7 +907,7 @@ class SearchBuilder
             $model->fill($values);
             $model->save();
         }else{
-            $model = $this->model->newInstance($values);
+            $model = $this->model->fill($values);
             $model->save();
         }
         return $model;

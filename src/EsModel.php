@@ -39,6 +39,8 @@ class EsModel extends Model
 
     protected $guarded = [];
 
+    public $documentIndex;
+
 
     /**
      * Overriding save method

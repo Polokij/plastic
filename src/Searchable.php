@@ -98,6 +98,18 @@ trait Searchable
     }
 
     /**
+     * Method allow to set/change the index for model
+     *
+     * @param $index
+     *
+     * @return $this
+     */
+    public function setDocumentIndex($index){
+        $this->documentIndex = $index;
+        return $this;
+    }
+
+    /**
      * Build the document data with the appropriate method.
      *
      * @return array
