@@ -914,6 +914,23 @@ class SearchBuilder
     }
 
     /**
+     * Delete by query
+     *
+     * @return array
+     */
+    public function delete(){
+
+        $params = [
+            'index' => $this->getIndex(),
+            'type'  => $this->getType(),
+            'body'  => $this->toDSL(),
+        ];
+
+        return $this->connection->getClient()->deleteByQuery($params);
+    }
+
+
+    /**
      * Return the current elastic type.
      *
      * @return string
