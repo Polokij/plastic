@@ -22,7 +22,12 @@ class EloquentFiller implements FillerInterface
     public function fill(Model $model, Result $result)
     {
         $hits = $result->hits()->map(function ($hit) use ($model) {
-            return $this->fillModel($model, $hit)->syncOriginal();
+
+            $model = $this->fillModel($model, $hit)->syncOriginal();
+
+            $model->setDocumentIndex($hit['_index']);
+
+            return $model;
         });
 
         $result->setHits($hits);
