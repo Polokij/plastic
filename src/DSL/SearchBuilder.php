@@ -907,7 +907,12 @@ class SearchBuilder
             $model->fill($values);
             $model->save();
         }else{
-            $model = $this->model->fill($values);
+            $model = $this->model;
+
+            if($model->getDocumentIndex() !== $this->index){
+                $model->setDocumentIndex($this->index);
+            }
+            $model->fill($values);
             $model->save();
         }
         return $model;
