@@ -10,7 +10,6 @@ use ONGR\ElasticsearchDSL\Aggregation\Bucketing\HistogramAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Bucketing\Ipv4RangeAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Bucketing\MissingAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Bucketing\RangeAggregation;
-use ONGR\ElasticsearchDSL\Aggregation\Bucketing\TermsAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\AvgAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\CardinalityAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\GeoBoundsAggregation;
@@ -21,16 +20,31 @@ use ONGR\ElasticsearchDSL\Aggregation\Metric\PercentilesAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\StatsAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\SumAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\ValueCountAggregation;
+use ONGR\ElasticsearchDSL\Aggregation\Pipeline\BucketScriptAggregation;
+use ONGR\ElasticsearchDSL\BuilderInterface;
 use ONGR\ElasticsearchDSL\Search as Query;
 
-class AggregationBuilder
+use Sleimanx2\Plastic\DSL\Aggregations\NestedAggregation;
+use Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation;
+use Sleimanx2\Plastic\DSL\Aggregations\WeightedAvgAggregation;
+
+class AggregationBuilder extends AbstractAggregation
 {
+
     /**
      * An instance of DSL query.
      *
      * @var Query
      */
     public $query;
+
+    /**
+     * Is a current aggregation top level.
+     * In case topLevel = false - returning the value of 'aggregations' field
+     *
+     * @var bool
+     */
+    public $topLevel = true;
 
     /**
      * Builder constructor.
@@ -323,12 +337,103 @@ class AggregationBuilder
      * @param string      $alias
      * @param string|null $field
      * @param string|null $script
+     *
+     * @return \Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation
      */
     public function terms($alias, $field = null, $script = null)
     {
-        $aggregation = new TermsAggregation($alias, $field, $script);
+
+        if($script instanceof \Closure){
+            /** @var TermsAggregation $aggregation */
+            $aggregation = new TermsAggregation($alias, $field);
+
+            $emptyQuery =  $query = new \ONGR\ElasticsearchDSL\Search();
+
+            $subAggregation = new AggregationBuilder($emptyQuery);
+
+            $script($subAggregation);
+
+            $subAggregations = $subAggregation->query->getAggregations();
+            foreach ($subAggregations as $subAgg){
+                $aggregation->addAggregation($subAgg);
+            }
+
+        }else{
+            /** @var TermsAggregation $aggregation */
+            $aggregation = new TermsAggregation($alias, $field, $script);
+        }
+
 
         $this->append($aggregation);
+
+        return $aggregation;
+    }
+
+    /**
+     * Adding nested aggregation
+     *
+     * @param          $alias
+     * @param          $field
+     * @param \Closure $callback
+     *
+     * @return \Sleimanx2\Plastic\DSL\Aggregations\NestedAggregation|\Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation
+     */
+    public function nested($alias, $field, \Closure $callback){
+        /** @var TermsAggregation $aggregation */
+        $aggregation = new NestedAggregation($alias, $field);
+
+        $emptyQuery =  $query = new \ONGR\ElasticsearchDSL\Search();
+
+        $subAggregation = new AggregationBuilder($emptyQuery);
+
+        $callback($subAggregation);
+
+        $subAggregations = $subAggregation->query->getAggregations();
+
+        foreach ($subAggregations as $subAgg){
+            $aggregation->addAggregation($subAgg);
+        }
+
+        $this->append($aggregation);
+
+        return $aggregation;
+
+    }
+
+    /**
+     * Add the weighted_avg aggregation
+     *
+     * @param $alias
+     * @param $field
+     * @param $weight
+     *
+     * @return \Sleimanx2\Plastic\DSL\Aggregations\WeightedAvgAggregation
+     */
+    public function weightedAvg($alias, $field, $weight){
+
+        $aggregation = new WeightedAvgAggregation($alias, $field, $weight);
+
+        $this->append($aggregation);
+
+        return $aggregation;
+    }
+
+    /**
+     * Add bucket_script aggregation
+     *
+     * @param       $alias
+     * @param array $bucketsPath
+     * @param       $script
+     *
+     * @return \ONGR\ElasticsearchDSL\Aggregation\Pipeline\BucketScriptAggregation
+     */
+    public function bucketScript($alias, array $bucketsPath, $script){
+
+        $aggregation = new BucketScriptAggregation($alias, $bucketsPath, $script);
+
+        $this->append($aggregation);
+
+        return $aggregation;
     }
 
     /**
@@ -350,4 +455,60 @@ class AggregationBuilder
     {
         $this->query->addAggregation($aggregation);
     }
+
+    /**
+     * Implementation the method from BuilderInterface
+     *
+     * @return string
+     */
+    public function getType()
+    {
+        return 'aggregations';
+    }
+
+    /**
+     * Implementation the method from BuilderInterface
+     *
+     * @return array|mixed
+     */
+    public function toArray()
+    {
+        $array = $this->toDSL();
+        if($this->topLevel){
+            return $array['aggregations'];
+        }
+        return $array['aggregations']['aggregations'] ?? $array['aggregations'] ?? $array;
+    }
+
+    /**
+     * Method required for serialization of the aggregation
+     *
+     * @return string
+     */
+    public function getName(){
+        return $this->getType();
+    }
+
+    public function supportsNesting()
+    {
+        return true;
+    }
+
+    public function getArray()
+    {
+        return [];
+    }
+
+    public function flattenResult($result){
+        $aggregations = collect($this->query->getAggregations());
+        $aggregationResults = $aggregations->mapWithKeys(function($aggregation, $key) use ($result){
+            $fieldName = $aggregation->getName();
+            if($aggregation instanceof SumAggregation || $aggregation instanceof BucketScriptAggregation){
+                return [$fieldName => $result[$fieldName]['value'] ?? "N/A"];
+            }
+
+            return $aggregation->flattenResult($result);
+        });
+    }
+
 }

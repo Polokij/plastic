@@ -160,4 +160,10 @@ class PlasticResult
     {
         return $this->aggregations;
     }
+
+    public function setAggregations($aggregations){
+
+        $this->aggregations = $aggregations;
+
+    }
 }

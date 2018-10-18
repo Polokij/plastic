@@ -3,6 +3,7 @@
 namespace Sleimanx2\Plastic\DSL;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\Macroable;
 use ONGR\ElasticsearchDSL\Highlight\Highlight;
 use ONGR\ElasticsearchDSL\Query\Compound\BoolQuery;
@@ -91,6 +92,13 @@ class SearchBuilder
     protected $boolState = BoolQuery::MUST;
 
     /**
+     * Last query result
+     *
+     * @var  PlasticResult
+     */
+    protected $lastResult;
+
+    /**
      * Builder constructor.
      *
      * @param Connection $connection
@@ -102,6 +110,44 @@ class SearchBuilder
         $this->query = $grammar ?: $connection->getDSLGrammar();
     }
 
+
+    /**
+     * Return the total of hits for general request
+     * or value of cardinality aggregation response
+     * in case aggregation used
+     *
+     * @return int
+     */
+    public function count(){
+        /** @var SearchBuilder $query */
+        $newSearchBuilder = clone($this);
+        $newSearchBuilder->size(0);
+
+        /** @var Query $query */
+        $query = $newSearchBuilder->query;
+
+        if($this->hasAggregation()){
+
+            $aggregations = $query->getAggregations();
+
+            /** @var \ONGR\ElasticsearchDSL\Aggregation\Bucketing\TermsAggregation $firstAggregation */
+            $firstAggregation = reset($aggregations);
+            $firstAggsField = $firstAggregation->getField();
+
+            $firstAggregation->setParameters(['size' => 1]);
+
+            $newSearchBuilder->aggregate(function(AggregationBuilder $aggBuilder) use ($firstAggsField){
+                $aggBuilder->cardinality('count', $firstAggsField);
+            });
+
+            $rawResult = $newSearchBuilder->getRaw();
+            return $rawResult['aggregations']['count']['value'] ?? 0;
+
+        }else {
+            $rawResult = $newSearchBuilder->size(0)->getRaw();
+            return $rawResult['hits']['total'];
+        }
+    }
     /**
      * Set the elastic type to query against.
      *
@@ -335,6 +381,23 @@ class SearchBuilder
         }
 
         return $this;
+    }
+
+    /**
+     * Flattening the aggregation result
+     * to rows view
+     *
+     * @param $aggsArray
+     *
+     * @return mixed
+     */
+    private function flattenAggregation($aggsArray){
+
+        $baseAggregations = $this->query->getAggregations();
+
+        $firstAggregation = reset($baseAggregations);
+
+        return $firstAggregation->flattenResult($aggsArray);
     }
 
     /**
@@ -699,6 +762,10 @@ class SearchBuilder
         return $this;
     }
 
+    public function hasAggregation(){
+        return ! empty($this->query->getAggregations());
+    }
+
     /**
      * Add function score.
      *
@@ -749,6 +816,8 @@ class SearchBuilder
      */
     public function getRaw()
     {
+        \Log::info('ES request : '. $this->toJson());
+
         $params = [
             'index' => $this->getIndex(),
             'type'  => $this->getType(),
@@ -761,20 +830,113 @@ class SearchBuilder
     /**
      * Execute the search query against elastic and return the raw result if the model is not set.
      *
-     * @return PlasticResult
+     * @return PlasticResult | Collection
      */
-    public function get()
+    public function get($responseResult = false)
     {
+
         $result = $this->getRaw();
 
         $result = new PlasticResult($result);
 
+        $this->lastResult = clone($result);
+
         if ($this->model) {
-            $this->getModelFiller()->fill($this->model, $result);
+            if(! $this->hasAggregation()){
+                $this->getModelFiller()->fill($this->model, $result);
+            }else{
+                $flattenedAggsResult = $this->flattenAggregation($result->aggregations());
+                $result->setHits(collect($flattenedAggsResult->toArray()));
+                $this->getModelFiller()->fill($this->model, $result);
+            }
         }
 
-        return $result;
+        if($responseResult){
+            return $result;
+        }
+        return $result->hits();
     }
+
+    /**
+     * Execute the query and get the first result from hits.
+     *
+     * @return null
+     */
+    public function first(){
+
+        $searchResults = $this->size(1)
+            ->get();
+
+        if($searchResults->count()){
+            return $searchResults->first();
+        }
+
+        return null;
+    }
+
+    /**
+     * Add a basic term or terms clause to the query.
+     *
+     * @param $filters
+     *
+     * @return $this
+     */
+    public function where($filters)
+    {
+        $this->must();
+
+        // iterating the filters
+        collect($filters)->each(function ($ids, $name) {
+            $ids = $ids['value'] ?? $ids;
+            is_array($ids) && count($ids) && $this->terms($name, $ids);
+            ( ! is_array($ids)) && $this->term($name, $ids);
+        });
+        return $this;
+    }
+
+    /**
+     * Create or update a record matching the attributes, and fill it with values.
+     *
+     * @param  array  $attributes
+     * @param  array  $values
+     * @return \Illuminate\Database\Eloquent\Model
+     */
+    public function updateOrCreate($attributes, $values)
+    {
+        $model = $this->where($attributes)->first();
+
+        /** Checking is the hits exists */
+        if($model){
+            $model->fill($values);
+            $model->save();
+        }else{
+            $model = $this->model;
+
+            if($model->getDocumentIndex() !== $this->index){
+                $model->setDocumentIndex($this->index);
+            }
+            $model->fill($values);
+            $model->save();
+        }
+        return $model;
+    }
+
+    /**
+     * Delete by query
+     *
+     * @return array
+     */
+    public function delete(){
+
+        $params = [
+            'index' => $this->getIndex(),
+            'type'  => $this->getType(),
+            'body'  => $this->toDSL(),
+        ];
+
+        return $this->connection->getClient()->deleteByQuery($params);
+    }
+
 
     /**
      * Return the current elastic type.
@@ -817,6 +979,16 @@ class SearchBuilder
     }
 
     /**
+     * Get the underlying query builder instance.
+     *
+     * @return \ONGR\ElasticsearchDSL\Search
+     */
+    public function getQuery()
+    {
+        return $this->query;
+    }
+
+    /**
      * Paginate result hits.
      *
      * @param int      $limit
@@ -831,7 +1003,7 @@ class SearchBuilder
         $from = $limit * ($page - 1);
         $size = $limit;
 
-        $result = $this->from($from)->size($size)->get();
+        $result = $this->from($from)->size($size)->get(true);
 
         return new PlasticPaginator($result, $size, $page);
     }
@@ -843,7 +1015,27 @@ class SearchBuilder
      */
     public function toDSL()
     {
+        if($this->hasAggregation()){
+            if($size = $this->query->getSize()){
+                $aggs = $this->query->getAggregations();
+                foreach ($aggs as $agg){
+                    $agg->setParameters(['size' => $size]);
+                }
+                $this->size(0);
+            }
+
+        }
+
         return $this->query->toArray();
+    }
+
+    /**
+     * Return the json for DSL
+     *
+     * @return string
+     */
+    public function toJson(){
+        return json_encode($this->toDSL());
     }
 
     /**
@@ -871,4 +1063,36 @@ class SearchBuilder
     {
         return $current ?: (int) \Request::get('page', 1);
     }
+
+    /**
+     * Dynamically handle calls into the query instance.
+     *
+     * @param  string  $method
+     * @param  array  $parameters
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        if (method_exists($this->model, $scope = 'scope'.ucfirst($method))) {
+            return $this->callScope([$this->model, $scope], $parameters);
+        }
+    }
+
+    /**
+     * Apply the given scope on the current builder instance.
+     *
+     * @param  callable  $scope
+     * @param  array  $parameters
+     * @return mixed
+     */
+    protected function callScope(callable $scope, $parameters){
+        array_unshift($parameters, $this);
+
+        $query = $this->getQuery();
+
+        $result = $scope(...array_values($parameters)) ?? $this;
+
+        return $result;
+    }
+
 }

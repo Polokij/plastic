@@ -3,6 +3,7 @@
 namespace Sleimanx2\Plastic\Fillers;
 
 use Illuminate\Database\Eloquent\Model;
+//use Sleimanx2\Plastic\EsModel as Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use ReflectionMethod;
@@ -21,10 +22,24 @@ class EloquentFiller implements FillerInterface
     public function fill(Model $model, Result $result)
     {
         $hits = $result->hits()->map(function ($hit) use ($model) {
-            return $this->fillModel($model, $hit);
+
+            $model = $this->fillModel($model, $hit)->syncOriginal();
+
+            isset($hit['_index']) && $model->setDocumentIndex($hit['_index']);
+
+            return $model;
         });
 
         $result->setHits($hits);
+    }
+
+    public function fillAggsData(Model $model, Result $result){
+        $collection = collect($result->aggregations())
+            ->map(function ($aggsItem) use ($model) {
+                return $this->fillModel($model, $aggsItem)->syncOriginal();
+            });
+
+        $result->setHits($collection);
     }
 
     /**
@@ -41,7 +56,7 @@ class EloquentFiller implements FillerInterface
     {
         $key_name = $model->getKeyName();
 
-        $attributes = $hit['_source'];
+        $attributes = $hit['_source']  ?? $hit;
 
         if (isset($hit['_id'])) {
             $attributes[$key_name] = is_numeric($hit['_id']) ? intval($hit['_id']) : $hit['_id'];
@@ -54,11 +69,13 @@ class EloquentFiller implements FillerInterface
             }
         }
 
+        /** @var Model $instance */
         $instance = $this->newFromBuilderRecursive($model, $attributes);
+
 
         // In addition to setting the attributes
         // from the index, we will set the score as well.
-        $instance->documentScore = $hit['_score'];
+        isset($hit['_score']) && $instance->documentScore = $hit['_score'];
         // This is now a model created
         // from an Elasticsearch document.
         $instance->isDocument = true;

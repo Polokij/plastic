@@ -258,6 +258,7 @@ class AggregationBuilderTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(['aggregations' => ['foo' => ['terms' => ['field' => 'bar']]]], $builder->toDSL());
     }
 
+
     private function getBuilder()
     {
         $query = new \ONGR\ElasticsearchDSL\Search();

@@ -75,9 +75,9 @@ class EloquentPersistence
     {
         $this->exitIfModelNotSet();
 
-        if (!$this->model->exists) {
-            throw new \Exception('Model not persisted yet');
-        }
+//        if (!$this->model->exists) {
+//            throw new \Exception('Model not persisted yet');
+//        }
         $document = $this->model->getDocumentData();
 
         $params = [
