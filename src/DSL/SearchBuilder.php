@@ -832,7 +832,7 @@ class SearchBuilder
      *
      * @return PlasticResult | Collection
      */
-    public function get()
+    public function get($responseResult = false)
     {
 
         $result = $this->getRaw();
@@ -851,6 +851,9 @@ class SearchBuilder
             }
         }
 
+        if($responseResult){
+            return $result;
+        }
         return $result->hits();
     }
 
@@ -1000,7 +1003,7 @@ class SearchBuilder
         $from = $limit * ($page - 1);
         $size = $limit;
 
-        $result = $this->from($from)->size($size)->get();
+        $result = $this->from($from)->size($size)->get(true);
 
         return new PlasticPaginator($result, $size, $page);
     }

@@ -25,6 +25,8 @@ class EloquentFiller implements FillerInterface
 
             $model = $this->fillModel($model, $hit)->syncOriginal();
 
+            isset($hit['_index']) && $model->setDocumentIndex($hit['_index']);
+
             return $model;
         });
 
@@ -59,7 +61,6 @@ class EloquentFiller implements FillerInterface
         if (isset($hit['_id'])) {
             $attributes[$key_name] = is_numeric($hit['_id']) ? intval($hit['_id']) : $hit['_id'];
         }
-        isset($hit['_index']) && $model->setDocumentIndex($hit['_index']);
 
         // Add fields to attributes
         if (isset($hit['fields'])) {
