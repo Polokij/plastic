@@ -189,6 +189,22 @@ class EsModel extends Model
     }
 
     /**
+     * Perform the actual delete query on this model instance.
+     *
+     * @return void
+     */
+    protected function performDeleteOnModel()
+    {
+
+        $this->document()->delete();
+
+        unset($this['_id']);
+
+        $this->exists = false;
+    }
+
+
+    /**
      * Handle dynamic method calls into the model.
      *
      * @param string $method
