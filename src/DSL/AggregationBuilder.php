@@ -24,6 +24,7 @@ use ONGR\ElasticsearchDSL\Aggregation\Pipeline\BucketScriptAggregation;
 use ONGR\ElasticsearchDSL\BuilderInterface;
 use ONGR\ElasticsearchDSL\Search as Query;
 
+use Sleimanx2\Plastic\DSL\Aggregations\BucketSortAggregation;
 use Sleimanx2\Plastic\DSL\Aggregations\NestedAggregation;
 use Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation;
 use Sleimanx2\Plastic\DSL\Aggregations\WeightedAvgAggregation;
@@ -59,7 +60,7 @@ class AggregationBuilder extends AbstractAggregation
     /**
      * Add an average aggregate.
      *
-     * @param $alias
+     * @param             $alias
      * @param string|null $field
      * @param string|null $script
      */
@@ -73,7 +74,7 @@ class AggregationBuilder extends AbstractAggregation
     /**
      * Add an cardinality aggregate.
      *
-     * @param $alias
+     * @param             $alias
      * @param string|null $field
      * @param string|null $script
      * @param int         $precision
@@ -97,9 +98,9 @@ class AggregationBuilder extends AbstractAggregation
     /**
      * Add a date range aggregate.
      *
-     * @param $alias
-     * @param $field
-     * @param $format
+     * @param       $alias
+     * @param       $field
+     * @param       $format
      * @param array $ranges
      *
      * @internal param null $from
@@ -160,7 +161,7 @@ class AggregationBuilder extends AbstractAggregation
     /**
      * Add a histogram aggregate.
      *
-     * @param $alias
+     * @param        $alias
      * @param string $field
      * @param int    $interval
      * @param int    $minDocCount
@@ -185,12 +186,14 @@ class AggregationBuilder extends AbstractAggregation
             $extendedBoundsMin, $extendedBoundsMax, $keyed);
 
         $this->append($aggregation);
+
+        return $aggregation;
     }
 
     /**
      * Add an ipv4 range aggregate.
      *
-     * @param $alias
+     * @param       $alias
      * @param null  $field
      * @param array $ranges
      */
@@ -199,12 +202,14 @@ class AggregationBuilder extends AbstractAggregation
         $aggregation = new Ipv4RangeAggregation($alias, $field, $ranges);
 
         $this->append($aggregation);
+
+        return $aggregation;
     }
 
     /**
      * Add an max aggregate.
      *
-     * @param $alias
+     * @param             $alias
      * @param string|null $field
      * @param string|null $script
      */
@@ -218,7 +223,7 @@ class AggregationBuilder extends AbstractAggregation
     /**
      * Add an min aggregate.
      *
-     * @param $alias
+     * @param             $alias
      * @param string|null $field
      * @param string|null $script
      */
@@ -245,11 +250,11 @@ class AggregationBuilder extends AbstractAggregation
     /**
      * Add an percentile aggregate.
      *
-     * @param $alias
+     * @param        $alias
      * @param string $field
-     * @param $percents
-     * @param null $script
-     * @param null $compression
+     * @param        $percents
+     * @param null   $script
+     * @param null   $compression
      */
     public function percentile($alias, $field, $percents, $script = null, $compression = null)
     {
@@ -261,7 +266,7 @@ class AggregationBuilder extends AbstractAggregation
     /**
      * Add an percentileRanks aggregate.
      *
-     * @param $alias
+     * @param        $alias
      * @param string $field
      * @param array  $values
      * @param null   $script
@@ -277,7 +282,7 @@ class AggregationBuilder extends AbstractAggregation
     /**
      * Add an stats aggregate.
      *
-     * @param $alias
+     * @param             $alias
      * @param string      $field
      * @param string|null $script
      */
@@ -291,7 +296,7 @@ class AggregationBuilder extends AbstractAggregation
     /**
      * Add an sum aggregate.
      *
-     * @param $alias
+     * @param             $alias
      * @param string      $field
      * @param string|null $script
      */
@@ -305,7 +310,7 @@ class AggregationBuilder extends AbstractAggregation
     /**
      * Add a value count aggregate.
      *
-     * @param $alias
+     * @param             $alias
      * @param string      $field
      * @param string|null $script
      */
@@ -343,22 +348,22 @@ class AggregationBuilder extends AbstractAggregation
     public function terms($alias, $field = null, $script = null)
     {
 
-        if($script instanceof \Closure){
+        if ($script instanceof \Closure) {
             /** @var TermsAggregation $aggregation */
             $aggregation = new TermsAggregation($alias, $field);
 
-            $emptyQuery =  $query = new \ONGR\ElasticsearchDSL\Search();
+            $emptyQuery = $query = new \ONGR\ElasticsearchDSL\Search();
 
             $subAggregation = new AggregationBuilder($emptyQuery);
 
             $script($subAggregation);
 
             $subAggregations = $subAggregation->query->getAggregations();
-            foreach ($subAggregations as $subAgg){
+            foreach ($subAggregations as $subAgg) {
                 $aggregation->addAggregation($subAgg);
             }
 
-        }else{
+        } else {
             /** @var TermsAggregation $aggregation */
             $aggregation = new TermsAggregation($alias, $field, $script);
         }
@@ -378,11 +383,12 @@ class AggregationBuilder extends AbstractAggregation
      *
      * @return \Sleimanx2\Plastic\DSL\Aggregations\NestedAggregation|\Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation
      */
-    public function nested($alias, $field, \Closure $callback){
+    public function nested($alias, $field, \Closure $callback)
+    {
         /** @var TermsAggregation $aggregation */
         $aggregation = new NestedAggregation($alias, $field);
 
-        $emptyQuery =  $query = new \ONGR\ElasticsearchDSL\Search();
+        $emptyQuery = $query = new \ONGR\ElasticsearchDSL\Search();
 
         $subAggregation = new AggregationBuilder($emptyQuery);
 
@@ -390,7 +396,7 @@ class AggregationBuilder extends AbstractAggregation
 
         $subAggregations = $subAggregation->query->getAggregations();
 
-        foreach ($subAggregations as $subAgg){
+        foreach ($subAggregations as $subAgg) {
             $aggregation->addAggregation($subAgg);
         }
 
@@ -409,7 +415,8 @@ class AggregationBuilder extends AbstractAggregation
      *
      * @return \Sleimanx2\Plastic\DSL\Aggregations\WeightedAvgAggregation
      */
-    public function weightedAvg($alias, $field, $weight){
+    public function weightedAvg($alias, $field, $weight)
+    {
 
         $aggregation = new WeightedAvgAggregation($alias, $field, $weight);
 
@@ -427,9 +434,30 @@ class AggregationBuilder extends AbstractAggregation
      *
      * @return \ONGR\ElasticsearchDSL\Aggregation\Pipeline\BucketScriptAggregation
      */
-    public function bucketScript($alias, array $bucketsPath, $script){
+    public function bucketScript($alias, array $bucketsPath, $script)
+    {
 
         $aggregation = new BucketScriptAggregation($alias, $bucketsPath, $script);
+
+        $this->append($aggregation);
+
+        return $aggregation;
+    }
+
+    /**
+     * Add bucket_sort aggregation
+     *
+     * @param          $alias
+     * @param array    $sorts
+     * @param int|null $size
+     * @param int|null $from
+     *
+     * @return \Sleimanx2\Plastic\DSL\Aggregations\BucketSortAggregation
+     */
+    public function bucketSort($alias, array $sorts, int $size = null, int $from = null)
+    {
+
+        $aggregation = new BucketSortAggregation($alias, $sorts, $size, $from);
 
         $this->append($aggregation);
 
@@ -474,7 +502,7 @@ class AggregationBuilder extends AbstractAggregation
     public function toArray()
     {
         $array = $this->toDSL();
-        if($this->topLevel){
+        if ($this->topLevel) {
             return $array['aggregations'];
         }
         return $array['aggregations']['aggregations'] ?? $array['aggregations'] ?? $array;
@@ -485,7 +513,8 @@ class AggregationBuilder extends AbstractAggregation
      *
      * @return string
      */
-    public function getName(){
+    public function getName()
+    {
         return $this->getType();
     }
 
@@ -499,11 +528,12 @@ class AggregationBuilder extends AbstractAggregation
         return [];
     }
 
-    public function flattenResult($result){
+    public function flattenResult($result)
+    {
         $aggregations = collect($this->query->getAggregations());
-        $aggregationResults = $aggregations->mapWithKeys(function($aggregation, $key) use ($result){
+        $aggregationResults = $aggregations->mapWithKeys(function ($aggregation, $key) use ($result) {
             $fieldName = $aggregation->getName();
-            if($aggregation instanceof SumAggregation || $aggregation instanceof BucketScriptAggregation){
+            if ($aggregation instanceof SumAggregation || $aggregation instanceof BucketScriptAggregation) {
                 return [$fieldName => $result[$fieldName]['value'] ?? "N/A"];
             }
 

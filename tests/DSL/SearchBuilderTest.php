@@ -586,7 +586,7 @@ class SearchBuilderTest extends PHPUnit_Framework_TestCase
             'body'  => [],
         ])->andReturn($return);
 
-        $this->assertInstanceOf(PlasticResult::class, $builder->get());
+        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $builder->get());
     }
 
     /**

@@ -816,7 +816,7 @@ class SearchBuilder
      */
     public function getRaw()
     {
-        \Log::info('ES request : '. $this->toJson());
+//        \Log::info('ES request : '. $this->toJson());
 
         $params = [
             'index' => $this->getIndex(),
