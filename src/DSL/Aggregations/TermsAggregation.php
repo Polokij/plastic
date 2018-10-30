@@ -79,7 +79,7 @@ class TermsAggregation extends Terms
      */
     public function getSorts(){
 
-      return $this->sorts;
+        return $this->sorts;
 
     }
 
@@ -89,8 +89,13 @@ class TermsAggregation extends Terms
         if( ! $termResults || ! isset($termResults['buckets'])){
             return [];
         }
-        $aggregations = collect($this->getAggregations());
+        $aggregations = collect($this->getAggregations())
+            ->filter(function($agg){
+                // skip the bucket sort aggregation because it doesn't have the result value in the buckets
+                return ! $agg instanceof BucketSortAggregation;
+            });
 
+        // Mapping the bucket to have a flat result similar
         $buckets = collect($termResults['buckets'])
             // iterate the buckets
             ->map(function($bucket) use ($aggregations){
@@ -101,7 +106,7 @@ class TermsAggregation extends Terms
                     if($aggr instanceof SumAggregation || $aggr instanceof BucketScriptAggregation){
                         return [$fieldName => $bucket[$fieldName]['value'] ?? "N/A"];
                     }
-                   return $aggr->flattenResult($bucket);
+                    return $aggr->flattenResult($bucket);
                 });
                 $bucketResult[$this->getName()] = $bucket['key'];
                 return $bucketResult;

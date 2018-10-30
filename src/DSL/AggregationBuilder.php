@@ -305,6 +305,8 @@ class AggregationBuilder extends AbstractAggregation
         $aggregation = new SumAggregation($alias, $field, $script);
 
         $this->append($aggregation);
+
+        return $aggregation;
     }
 
     /**
