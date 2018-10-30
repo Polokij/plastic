@@ -816,7 +816,7 @@ class SearchBuilder
      */
     public function getRaw()
     {
-//        \Log::info('ES request : '. $this->toJson());
+        //        \Log::info('ES request : '. $this->toJson());
 
         $params = [
             'index' => $this->getIndex(),
@@ -976,6 +976,11 @@ class SearchBuilder
     public function getBoolState()
     {
         return $this->boolState;
+    }
+
+    public function getLastResult(){
+
+        return $this->lastResult;
     }
 
     /**
