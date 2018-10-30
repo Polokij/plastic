@@ -823,7 +823,7 @@ class SearchBuilder
             'type'  => $this->getType(),
             'body'  => $this->toDSL(),
         ];
-
+        \Log::info('request ', $params);
         return $this->connection->searchStatement($params);
     }
 
@@ -834,7 +834,7 @@ class SearchBuilder
      */
     public function get($responseResult = false)
     {
-
+        //        \Log::info('dsl', $this->toDSL());
         $result = $this->getRaw();
 
         $result = new PlasticResult($result);
@@ -919,6 +919,35 @@ class SearchBuilder
             $model->save();
         }
         return $model;
+    }
+
+    /**
+     * Implementation mass update by query feature of ES API
+     *
+     * @param array $attributes
+     *
+     * @return array
+     */
+    public function update(array $attributes){
+
+        $inline = collect('attributes')
+            ->map(function($value, $key){
+                return "ctx._source['$key']='$value';";
+            })->implode('');
+        $params = [
+            'index'         => $this->getIndex(),
+            'type'          => $this->getType(),
+            'body'          => $this->toDSL()
+                + [
+                    'script' => [
+                        'inline' => $inline,
+                        "lang"   => "painless"
+                    ]
+                ],
+
+        ];
+
+        return $this->connection->getClient()->updateByQuery($params);
     }
 
     /**
