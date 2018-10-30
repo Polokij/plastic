@@ -823,7 +823,7 @@ class SearchBuilder
             'type'  => $this->getType(),
             'body'  => $this->toDSL(),
         ];
-        \Log::info('request ', $params);
+//        \Log::info('request ', $params);
         return $this->connection->searchStatement($params);
     }
 
@@ -930,10 +930,11 @@ class SearchBuilder
      */
     public function update(array $attributes){
 
-        $inline = collect('attributes')
+        $inline = collect($attributes)
             ->map(function($value, $key){
                 return "ctx._source['$key']='$value';";
             })->implode('');
+
         $params = [
             'index'         => $this->getIndex(),
             'type'          => $this->getType(),
@@ -949,6 +950,7 @@ class SearchBuilder
 
         return $this->connection->getClient()->updateByQuery($params);
     }
+
 
     /**
      * Delete by query
