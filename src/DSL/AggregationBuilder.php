@@ -536,7 +536,7 @@ class AggregationBuilder extends AbstractAggregation
         $aggregationResults = $aggregations->mapWithKeys(function ($aggregation, $key) use ($result) {
             $fieldName = $aggregation->getName();
             if ($aggregation instanceof SumAggregation || $aggregation instanceof BucketScriptAggregation) {
-                return [$fieldName => $result[$fieldName]['value'] ?? "N/A"];
+                return [$fieldName => $result[$fieldName]['value'] ?? 0];
             }
 
             return $aggregation->flattenResult($result);

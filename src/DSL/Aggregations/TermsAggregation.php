@@ -104,7 +104,7 @@ class TermsAggregation extends Terms
                 $bucketResult = $aggregations->mapWithKeys(function(AbstractAggregation $aggr) use ($bucket){
                     $fieldName = $aggr->getName();
                     if($aggr instanceof SumAggregation || $aggr instanceof BucketScriptAggregation){
-                        return [$fieldName => $bucket[$fieldName]['value'] ?? "N/A"];
+                        return [$fieldName => $bucket[$fieldName]['value'] ?? 0];
                     }
                     return $aggr->flattenResult($bucket);
                 });
