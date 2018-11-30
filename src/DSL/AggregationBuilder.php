@@ -25,6 +25,7 @@ use ONGR\ElasticsearchDSL\BuilderInterface;
 use ONGR\ElasticsearchDSL\Search as Query;
 
 use Sleimanx2\Plastic\DSL\Aggregations\BucketSortAggregation;
+use Sleimanx2\Plastic\DSL\Aggregations\DateHistogramAggregation;
 use Sleimanx2\Plastic\DSL\Aggregations\NestedAggregation;
 use Sleimanx2\Plastic\DSL\Aggregations\TermsAggregation;
 use Sleimanx2\Plastic\DSL\Aggregations\WeightedAvgAggregation;
@@ -185,6 +186,28 @@ class AggregationBuilder extends AbstractAggregation
         $aggregation = new HistogramAggregation($alias, $field, $interval, $minDocCount, $orderMode, $orderDirection,
             $extendedBoundsMin, $extendedBoundsMax, $keyed);
 
+        $this->append($aggregation);
+
+        return $aggregation;
+    }
+
+    public function dateHistogram($alias, $field, $interval, \Closure $buildSubAggs  = null){
+
+        $aggregation = new DateHistogramAggregation($alias, $field, $interval);
+
+        if($buildSubAggs){
+            $emptyQuery = $query = new \ONGR\ElasticsearchDSL\Search();
+
+            $subAggregation = new AggregationBuilder($emptyQuery);
+
+            $buildSubAggs($subAggregation);
+
+            $subAggregations = $subAggregation->query->getAggregations();
+
+            foreach ($subAggregations as $subAgg) {
+                $aggregation->addAggregation($subAgg);
+            }
+        }
         $this->append($aggregation);
 
         return $aggregation;

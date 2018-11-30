@@ -12,8 +12,6 @@ use ONGR\ElasticsearchDSL\Aggregation\AbstractAggregation;
 use \ONGR\ElasticsearchDSL\Aggregation\Bucketing\TermsAggregation as Terms;
 use ONGR\ElasticsearchDSL\Aggregation\Metric\SumAggregation;
 use ONGR\ElasticsearchDSL\Aggregation\Pipeline\BucketScriptAggregation;
-use ONGR\ElasticsearchDSL\BuilderBag;
-use ONGR\ElasticsearchDSL\BuilderInterface;
 
 /**
  * Class TermsAggregation
@@ -48,18 +46,18 @@ class TermsAggregation extends Terms
     }
 
 
-
     /**
      * {@inheritdoc}
      */
     public function getArray()
     {
-        $data = array_filter(
-            [
-                'field' => $this->getField(),
-                'script' => $this->getScript(),
-            ]
-        );
+        $data = [
+            'field'  => $this->getField(),
+        ];
+
+        if($this->getScript()){
+            $data['script'] = $this->getScript();
+        }
 
         return $data;
     }
