@@ -35,24 +35,40 @@ class DateHistogramAggregation extends DateHistogram
                 return ! $agg instanceof BucketSortAggregation;
             });
 
+        $resultBuckets = collect([]);
         // Mapping the bucket to have a flat result similar
-        $buckets = collect($termResults['buckets'])
+        collect($termResults['buckets'])
             // iterate the buckets
-            ->map(function($bucket) use ($aggregations){
+            ->each(function($bucket) use ($aggregations, &$resultBuckets){
 
+                $lastLevelAggregation = true;
                 // iterating the bucket fields
-                $bucketResult = $aggregations->mapWithKeys(function(AbstractAggregation $aggr) use ($bucket){
+                $bucketResult = $aggregations->mapWithKeys(function(AbstractAggregation $aggr) use ($bucket, &$resultBuckets, &$lastLevelAggregation){
                     $fieldName = $aggr->getName();
                     if($aggr instanceof SumAggregation || $aggr instanceof BucketScriptAggregation){
                         return [$fieldName => $bucket[$fieldName]['value'] ?? 0];
                     }
-                    return $aggr->flattenResult($bucket);
+                    $aggrClass = get_class($aggr);
+                    $flattenResults = $aggr->flattenResult($bucket);
+
+                    if($aggr instanceof DateHistogramAggregation || $aggr instanceof TermsAggregation){
+                        $lastLevelAggregation = false;
+                        $flattenResults->transform(function($childBacket) use ($bucket, &$resultBuckets){
+                            $childBacket[$this->getField()] = $bucket['key'];
+
+                            $resultBuckets->push($childBacket);
+
+                            return $childBacket;
+                        });
+                        return $flattenResults->toArray();
+                    }
+                    return $flattenResults;
                 });
                 $bucketResult[$this->getName()] = $bucket['key'];
-                return $bucketResult;
+                $lastLevelAggregation && $resultBuckets->push($bucketResult);
             });
 
-        return $buckets;
+        return $resultBuckets;
 
     }
 
