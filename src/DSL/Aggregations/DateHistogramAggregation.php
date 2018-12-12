@@ -51,16 +51,23 @@ class DateHistogramAggregation extends DateHistogram
                     $aggrClass = get_class($aggr);
                     $flattenResults = $aggr->flattenResult($bucket);
 
-                    if($aggr instanceof DateHistogramAggregation || $aggr instanceof TermsAggregation){
+                    if ($aggr instanceof DateHistogramAggregation
+                        || $aggr instanceof TermsAggregation
+                        && ! $aggr instanceof NestedAggregation
+                    ) {
                         $lastLevelAggregation = false;
-                        $flattenResults->transform(function($childBacket) use ($bucket, &$resultBuckets){
+                        $flattenResults->transform(function ($childBacket) use ($bucket, &$resultBuckets) {
                             $childBacket[$this->getField()] = $bucket['key'];
 
                             $resultBuckets->push($childBacket);
 
                             return $childBacket;
                         });
-                        return $flattenResults->toArray();
+                        if ( ! is_array($flattenResults)) {
+                            return $flattenResults->toArray();
+                        }
+
+                        return $flattenResults;
                     }
                     return $flattenResults;
                 });
