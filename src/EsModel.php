@@ -131,7 +131,8 @@ class EsModel extends Model
                 'id'    => $_id,
                 'body'  => [
                     'doc' => $attributes,
-                ]
+                ],
+                'refresh' => true,
             ];
 
             $this->original = \Plastic::updateStatement($params);
@@ -171,6 +172,7 @@ class EsModel extends Model
             'index' => $this->getDocumentIndex(),
             'type'  => $this->getDocumentType(),
             'body'  => $attributes,
+            'refresh' => true,
         ];
         // Storing the document to Elasticsearch DB
         $this->original = \Plastic::indexStatement($params);
