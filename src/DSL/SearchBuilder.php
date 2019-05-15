@@ -102,7 +102,7 @@ class SearchBuilder
      * Builder constructor.
      *
      * @param Connection $connection
-     * @param Query      $grammar
+     * @param Query $grammar
      */
     public function __construct(Connection $connection, Query $grammar = null)
     {
@@ -118,7 +118,8 @@ class SearchBuilder
      *
      * @return int
      */
-    public function count(){
+    public function count()
+    {
         /** @var SearchBuilder $query */
         $newSearchBuilder = clone($this);
         $newSearchBuilder->size(0);
@@ -126,7 +127,7 @@ class SearchBuilder
         /** @var Query $query */
         $query = $newSearchBuilder->query;
 
-        if($this->hasAggregation()){
+        if ($this->hasAggregation()) {
 
             $aggregations = $query->getAggregations();
 
@@ -136,18 +137,19 @@ class SearchBuilder
 
             $firstAggregation->setParameters(['size' => 1]);
 
-            $newSearchBuilder->aggregate(function(AggregationBuilder $aggBuilder) use ($firstAggsField){
+            $newSearchBuilder->aggregate(function (AggregationBuilder $aggBuilder) use ($firstAggsField) {
                 $aggBuilder->cardinality('count', $firstAggsField);
             });
 
             $rawResult = $newSearchBuilder->getRaw();
             return $rawResult['aggregations']['count']['value'] ?? 0;
 
-        }else {
+        } else {
             $rawResult = $newSearchBuilder->size(0)->getRaw();
             return $rawResult['hits']['total'];
         }
     }
+
     /**
      * Set the elastic type to query against.
      *
@@ -181,9 +183,9 @@ class SearchBuilder
      *
      * @param Model|Searchable $model
      *
+     * @return $this
      * @throws InvalidArgumentException
      *
-     * @return $this
      */
     public function model(Model $model)
     {
@@ -191,7 +193,7 @@ class SearchBuilder
         $traits = class_uses_recursive(get_class($model));
 
         if (!isset($traits[Searchable::class])) {
-            throw new InvalidArgumentException(get_class($model).' does not use the searchable trait');
+            throw new InvalidArgumentException(get_class($model) . ' does not use the searchable trait');
         }
 
         $this->type($model->getDocumentType());
@@ -237,8 +239,8 @@ class SearchBuilder
      * Set the query sort values values.
      *
      * @param string|array $fields
-     * @param null         $order
-     * @param array        $parameters
+     * @param null $order
+     * @param array $parameters
      *
      * @return $this
      */
@@ -332,7 +334,7 @@ class SearchBuilder
      *
      * @param string $field
      * @param string $term
-     * @param array  $attributes
+     * @param array $attributes
      *
      * @return $this
      */
@@ -349,8 +351,8 @@ class SearchBuilder
      * Add an terms query.
      *
      * @param string $field
-     * @param array  $terms
-     * @param array  $attributes
+     * @param array $terms
+     * @param array $attributes
      *
      * @return $this
      */
@@ -391,7 +393,8 @@ class SearchBuilder
      *
      * @return mixed
      */
-    private function flattenAggregation($aggsArray){
+    private function flattenAggregation($aggsArray)
+    {
 
         $baseAggregations = $this->query->getAggregations();
 
@@ -405,7 +408,7 @@ class SearchBuilder
      *
      * @param string $field
      * @param string $value
-     * @param float  $boost
+     * @param float $boost
      *
      * @return $this
      */
@@ -441,7 +444,7 @@ class SearchBuilder
      *
      * @param string $field
      * @param string $term
-     * @param array  $attributes
+     * @param array $attributes
      *
      * @return $this
      */
@@ -457,9 +460,9 @@ class SearchBuilder
     /**
      * Add a multi match query.
      *
-     * @param array  $fields
+     * @param array $fields
      * @param string $term
-     * @param array  $attributes
+     * @param array $attributes
      *
      * @return $this
      */
@@ -476,8 +479,8 @@ class SearchBuilder
      * Add a geo bounding box query.
      *
      * @param string $field
-     * @param array  $values
-     * @param array  $parameters
+     * @param array $values
+     * @param array $parameters
      *
      * @return $this
      */
@@ -495,8 +498,8 @@ class SearchBuilder
      *
      * @param string $field
      * @param string $distance
-     * @param mixed  $location
-     * @param array  $attributes
+     * @param mixed $location
+     * @param array $attributes
      *
      * @return $this
      */
@@ -535,8 +538,8 @@ class SearchBuilder
      * Add a geo polygon query.
      *
      * @param string $field
-     * @param array  $points
-     * @param array  $attributes
+     * @param array $points
+     * @param array $attributes
      *
      * @return $this
      */
@@ -575,7 +578,7 @@ class SearchBuilder
      *
      * @param string $field
      * @param string $term
-     * @param array  $attributes
+     * @param array $attributes
      *
      * @return $this
      */
@@ -592,7 +595,7 @@ class SearchBuilder
      * Add a query string query.
      *
      * @param string $query
-     * @param array  $attributes
+     * @param array $attributes
      *
      * @return $this
      */
@@ -609,7 +612,7 @@ class SearchBuilder
      * Add a simple query string query.
      *
      * @param string $query
-     * @param array  $attributes
+     * @param array $attributes
      *
      * @return $this
      */
@@ -625,14 +628,14 @@ class SearchBuilder
     /**
      * Add a highlight to result.
      *
-     * @param array  $fields
-     * @param array  $parameters
+     * @param array $fields
+     * @param array $parameters
      * @param string $preTag
      * @param string $postTag
      *
+     * @return $this
      * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-highlighting.html
      *
-     * @return $this
      */
     public function highlight($fields = ['_all' => []], $parameters = [], $preTag = '<mark>', $postTag = '</mark>')
     {
@@ -656,7 +659,7 @@ class SearchBuilder
      * Add a range query.
      *
      * @param string $field
-     * @param array  $attributes
+     * @param array $attributes
      *
      * @return $this
      */
@@ -673,7 +676,7 @@ class SearchBuilder
      * Add a regexp query.
      *
      * @param string $field
-     * @param array  $attributes
+     * @param array $attributes
      *
      * @return $this
      */
@@ -727,7 +730,7 @@ class SearchBuilder
      *
      * @param $field
      * @param \Closure $closure
-     * @param string   $score_mode
+     * @param string $score_mode
      *
      * @return $this
      */
@@ -762,8 +765,9 @@ class SearchBuilder
         return $this;
     }
 
-    public function hasAggregation(){
-        return ! empty($this->query->getAggregations());
+    public function hasAggregation()
+    {
+        return !empty($this->query->getAggregations());
     }
 
     /**
@@ -771,7 +775,7 @@ class SearchBuilder
      *
      * @param \Closure $search
      * @param \Closure $closure
-     * @param array    $parameters
+     * @param array $parameters
      *
      * @return $this
      */
@@ -820,8 +824,8 @@ class SearchBuilder
 
         $params = [
             'index' => $this->getIndex(),
-            'type'  => $this->getType(),
-            'body'  => $this->toDSL(),
+            'type' => $this->getType(),
+            'body' => $this->toDSL(),
         ];
 //        \Log::info('request ', $params);
         return $this->connection->searchStatement($params);
@@ -842,16 +846,16 @@ class SearchBuilder
         $this->lastResult = clone($result);
 
         if ($this->model) {
-            if(! $this->hasAggregation()){
+            if (!$this->hasAggregation()) {
                 $this->getModelFiller()->fill($this->model, $result);
-            }else{
+            } else {
                 $flattenedAggsResult = $this->flattenAggregation($result->aggregations());
                 $result->setHits(collect($flattenedAggsResult->toArray()));
                 $this->getModelFiller()->fill($this->model, $result);
             }
         }
 
-        if($responseResult){
+        if ($responseResult) {
             return $result;
         }
         return $result->hits();
@@ -862,12 +866,13 @@ class SearchBuilder
      *
      * @return null
      */
-    public function first(){
+    public function first()
+    {
 
         $searchResults = $this->size(1)
             ->get();
 
-        if($searchResults->count()){
+        if ($searchResults->count()) {
             return $searchResults->first();
         }
 
@@ -889,7 +894,7 @@ class SearchBuilder
         collect($filters)->each(function ($ids, $name) {
             $ids = $ids['value'] ?? $ids;
             is_array($ids) && count($ids) && $this->terms($name, $ids);
-            ( ! is_array($ids)) && $this->term($name, $ids);
+            (!is_array($ids)) && $this->term($name, $ids);
         });
         return $this;
     }
@@ -897,8 +902,8 @@ class SearchBuilder
     /**
      * Create or update a record matching the attributes, and fill it with values.
      *
-     * @param  array  $attributes
-     * @param  array  $values
+     * @param array $attributes
+     * @param array $values
      * @return \Illuminate\Database\Eloquent\Model
      */
     public function updateOrCreate($attributes, $values)
@@ -906,13 +911,13 @@ class SearchBuilder
         $model = $this->where($attributes)->first();
 
         /** Checking is the hits exists */
-        if($model){
+        if ($model) {
             $model->fill($values);
             $model->save();
-        }else{
+        } else {
             $model = $this->model;
 
-            if($model->getDocumentIndex() !== $this->index){
+            if ($model->getDocumentIndex() !== $this->index) {
                 $model->setDocumentIndex($this->index);
             }
             $model->fill($values);
@@ -928,21 +933,30 @@ class SearchBuilder
      *
      * @return array
      */
-    public function update(array $attributes){
+    public function update(array $attributes)
+    {
 
         $inline = collect($attributes)
-            ->map(function($value, $key){
-                return "ctx._source['$key']='$value';";
+            ->map(function ($value, $key) {
+                if (is_string($value)) {
+                    return "ctx._source['$key']='$value';";
+                }
+                if (is_array($value)) {
+                    $value = json_encode($value);
+                }
+                return "ctx._source['$key']=$value;";
+
+
             })->implode('');
 
         $params = [
-            'index'         => $this->getIndex(),
-            'type'          => $this->getType(),
-            'body'          => $this->toDSL()
+            'index' => $this->getIndex(),
+            'type' => $this->getType(),
+            'body' => $this->toDSL()
                 + [
                     'script' => [
                         'inline' => $inline,
-                        "lang"   => "painless"
+                        "lang" => "painless"
                     ]
                 ],
 
@@ -957,12 +971,13 @@ class SearchBuilder
      *
      * @return array
      */
-    public function delete(){
+    public function delete()
+    {
 
         $params = [
             'index' => $this->getIndex(),
-            'type'  => $this->getType(),
-            'body'  => $this->toDSL(),
+            'type' => $this->getType(),
+            'body' => $this->toDSL(),
         ];
 
         return $this->connection->getClient()->deleteByQuery($params);
@@ -1009,7 +1024,8 @@ class SearchBuilder
         return $this->boolState;
     }
 
-    public function getLastResult(){
+    public function getLastResult()
+    {
 
         return $this->lastResult;
     }
@@ -1027,7 +1043,7 @@ class SearchBuilder
     /**
      * Paginate result hits.
      *
-     * @param int      $limit
+     * @param int $limit
      * @param null|int $current
      *
      * @return PlasticPaginator
@@ -1051,10 +1067,10 @@ class SearchBuilder
      */
     public function toDSL()
     {
-        if($this->hasAggregation()){
-            if($size = $this->query->getSize()){
+        if ($this->hasAggregation()) {
+            if ($size = $this->query->getSize()) {
                 $aggs = $this->query->getAggregations();
-                foreach ($aggs as $agg){
+                foreach ($aggs as $agg) {
                     $agg->setParameters(['size' => $size]);
                 }
                 $this->size(0);
@@ -1070,7 +1086,8 @@ class SearchBuilder
      *
      * @return string
      */
-    public function toJson(){
+    public function toJson()
+    {
         return json_encode($this->toDSL());
     }
 
@@ -1097,19 +1114,19 @@ class SearchBuilder
      */
     protected function getCurrentPage($current)
     {
-        return $current ?: (int) \Request::get('page', 1);
+        return $current ?: (int)\Request::get('page', 1);
     }
 
     /**
      * Dynamically handle calls into the query instance.
      *
-     * @param  string  $method
-     * @param  array  $parameters
+     * @param string $method
+     * @param array $parameters
      * @return mixed
      */
     public function __call($method, $parameters)
     {
-        if (method_exists($this->model, $scope = 'scope'.ucfirst($method))) {
+        if (method_exists($this->model, $scope = 'scope' . ucfirst($method))) {
             return $this->callScope([$this->model, $scope], $parameters);
         }
     }
@@ -1117,11 +1134,12 @@ class SearchBuilder
     /**
      * Apply the given scope on the current builder instance.
      *
-     * @param  callable  $scope
-     * @param  array  $parameters
+     * @param callable $scope
+     * @param array $parameters
      * @return mixed
      */
-    protected function callScope(callable $scope, $parameters){
+    protected function callScope(callable $scope, $parameters)
+    {
         array_unshift($parameters, $this);
 
         $query = $this->getQuery();
