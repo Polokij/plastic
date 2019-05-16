@@ -31,6 +31,7 @@ use ONGR\ElasticsearchDSL\Query\TermLevel\WildcardQuery;
 use ONGR\ElasticsearchDSL\Search as Query;
 use ONGR\ElasticsearchDSL\Sort\FieldSort;
 use Sleimanx2\Plastic\Connection;
+use Sleimanx2\Plastic\EsModel;
 use Sleimanx2\Plastic\Exception\InvalidArgumentException;
 use Sleimanx2\Plastic\Fillers\EloquentFiller;
 use Sleimanx2\Plastic\Fillers\FillerInterface;
@@ -66,7 +67,7 @@ class SearchBuilder
     /**
      * The model to use when querying elastic search.
      *
-     * @var Model
+     * @var EsModel Model
      */
     protected $model;
 
@@ -933,7 +934,7 @@ class SearchBuilder
      *
      * @return array
      */
-    public function update(array $attributes)
+    public function update(array $attributes, bool $sync = false)
     {
 
         $inline = collect($attributes)
@@ -959,6 +960,7 @@ class SearchBuilder
                         "lang" => "painless"
                     ]
                 ],
+            "refresh" => $sync,
 
         ];
 
@@ -971,14 +973,16 @@ class SearchBuilder
      *
      * @return array
      */
-    public function delete()
+    public function delete(bool $sync = true)
     {
 
         $params = [
             'index' => $this->getIndex(),
             'type' => $this->getType(),
             'body' => $this->toDSL(),
+            'refresh' => $sync,
         ];
+
 
         return $this->connection->getClient()->deleteByQuery($params);
     }
